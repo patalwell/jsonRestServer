@@ -188,8 +188,9 @@ func TestShowAllUsers(t *testing.T) {
 
 		fmt.Printf("%s", body)
 
-		if strings.Compare(string(body), string(js)) != 1 {
-			t.Errorf("want body to equal %s", js)
+		//if strings.Compare(string(body), string(js)) != 1 {
+		if string(body) != string(js) {
+			t.Errorf("Got %s , but want body to equal %s", body, js)
 		}
 	}
 }
@@ -334,8 +335,8 @@ func TestEditUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if strings.Compare(string(body), string(jsArray)) != 1 {
-		t.Errorf("want body to equal %s", jsArray)
+	if string(body) != string(jsArray) {
+		t.Errorf("Got %s but want body to equal %s", body, jsArray)
 	}
 }
 
@@ -364,10 +365,6 @@ func TestDeleteUser(t *testing.T) {
 		//update our portfolio
 		testUser.Portfolio = append(testUser.Portfolio, result.Response)
 
-		js, err := json.Marshal(testUser)
-		if err != nil {
-			t.Fatal(err)
-		}
 
 		// Initialize a new dummy http.Request
 		r, err := http.NewRequest(http.MethodDelete, "/user/delete?id=1", nil)
@@ -398,10 +395,13 @@ func TestDeleteUser(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		testResponse := fmt.Sprintf("Deleted %s", js)
+		//create a mock buffer for Writer interface
+		var buf bytes.Buffer
+		_,err = fmt.Fprintf(&buf, "Deleted User %d",testUser.Id)
 
-		if strings.Compare(string(body), string(testResponse)) != -1 {
-			t.Errorf("want body to equal %s", testResponse)
+
+		if string(body) != buf.String(){
+			t.Errorf("Got %s but want body to equal %s", body, buf.String())
 		}
 	}
 }

@@ -12,6 +12,7 @@ feed, and give information about a user’s chosen cities or stocks.
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -111,12 +112,15 @@ func ShowAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if allUsers != nil {
-		err := json.NewEncoder(w).Encode(allUsers)
+		js, err := json.Marshal(allUsers)
 		log.Println("GET /user/all", allUsers)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		//return json
+		w.Header().Set("Content-Type","application/json")
+		w.Write(js)
 		return
 
 	}
@@ -146,12 +150,15 @@ func ShowUser(w http.ResponseWriter, r *http.Request) {
 
 	for _, user := range allUsers {
 		if user.Id == id {
-			err := json.NewEncoder(w).Encode(user)
+			js, err := json.Marshal(user)
 			log.Println("GET /user?id=", allUsers)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			//return json
+			w.Header().Set("Content-Type","application/json")
+			w.Write(js)
 			return
 		}
 	}
@@ -191,7 +198,6 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to Marshall Request!", http.StatusInternalServerError)
 	}
 
-	//allUsers = append(allUsers,newUser)
 
 	//If the user exists send a bad request
 	for _, v := range allUsers {
@@ -288,11 +294,14 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 
 			//add new entry to userList
 			allUsers = append(allUsers[:idx], user)
-			err = json.NewEncoder(w).Encode(allUsers)
+			js, err := json.Marshal(allUsers)
 			if err != nil {
 				http.Error(w, "Something went wrong while encoding allUsers", http.StatusInternalServerError)
 				return
 			}
+
+			w.Header().Set("Content-Type","application/json")
+			w.Write(js)
 		}
 	}
 
@@ -326,12 +335,16 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		if user.Id == id {
 			//remove the user
 			allUsers = append(allUsers[:idx], allUsers[idx+1:]...)
+
 			//marshall user for output
 			js, err := json.Marshal(user)
 			log.Println("DELETE /user/delete?id=", queryParam, " ", string(js))
-			_, err = w.Write([]byte("Deleted User " + string(js)))
+
+			//write our response to the client
+			_, err = fmt.Fprintf(w,"Deleted User %d",user.Id )
 			if err != nil {
 				log.Println(err.Error())
+				http.Error(w, "Something went wrong while deleting a users", http.StatusInternalServerError)
 				return
 			}
 			return
